@@ -1,0 +1,37 @@
+{
+  "name": "@elirank1/claude-toolkit",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "OpenClaw-inspired automation toolkit with Claude AI, WhatsApp, HubSpot, and Google Meet integrations",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest"
+  },
+  "keywords": [
+    "claude",
+    "automation",
+    "mcp",
+    "whatsapp",
+    "hubspot",
+    "google-meet"
+  ],
+  "author": "Eliran <elirank512@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "dotenv": "^16.4.7",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

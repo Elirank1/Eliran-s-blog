@@ -1,0 +1,136 @@
+.song-list {
+  margin-top: 3rem;
+}
+
+.song-list h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.song-list-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+}
+
+.songs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.song-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.song-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.song-card.playing {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.song-status {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.status {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.status.generating {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.status.failed {
+  background: var(--error-bg);
+  color: var(--error-text);
+}
+
+.song-card h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.3rem;
+  padding-right: 2rem;
+}
+
+.song-meta {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.song-meta span {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+}
+
+.song-prompt {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0.75rem 0;
+}
+
+.song-duration {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0.75rem 0;
+}
+
+.song-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.play-button {
+  flex: 1;
+  padding: 0.75rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.play-button:hover {
+  background: var(--accent-hover);
+}
+
+.delete-button {
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.delete-button:hover {
+  background: var(--error-bg);
+}
+
+@media (max-width: 640px) {
+  .songs-grid {
+    grid-template-columns: 1fr;
+  }
+}

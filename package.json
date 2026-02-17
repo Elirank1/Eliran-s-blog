@@ -1,0 +1,26 @@
+{
+  "name": "@elirank1/monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Eliran's GitHub showcase: Technical blog, AI music generator, and Claude automation toolkit",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "blog:dev": "npm run dev --workspace=packages/blog",
+    "suno:dev": "npm run dev --workspace=packages/suno-music",
+    "toolkit:dev": "npm run dev --workspace=packages/claude-toolkit"
+  },
+  "keywords": [
+    "blog",
+    "ai-music",
+    "claude",
+    "automation",
+    "monorepo"
+  ],
+  "author": "Eliran <elirank512@gmail.com>",
+  "license": "MIT"
+}
