@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'packages/blog/**'
+      - '.github/workflows/deploy-blog.yml'
   workflow_dispatch:
 
 permissions:
@@ -27,13 +28,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
+        working-directory: packages/blog
         run: npm install
 
       - name: Build blog
-        run: npm run build --workspace=packages/blog
+        working-directory: packages/blog
+        run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
