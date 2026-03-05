@@ -1,0 +1,176 @@
+---
+layout: ../../layouts/BlogPost.astro
+title: 'She Went From "Using AI" to Running a Content Production Line — In One Hour'
+description: 'Most people use AI as a smarter Google. Here is how one non-technical person built a full content pipeline in 60 minutes.'
+pubDate: 2026-03-05
+tags: ['ai', 'productivity', 'tutorial', 'content']
+---
+
+Last week, someone close to me asked for help building a syllabus for a course she teaches. She's smart, creative, great at her craft. She'd been using ChatGPT the way most people do — ask a question, get an answer, then go do everything else manually.
+
+One hour later, she had a fully automated content pipeline: structured syllabus, AI-generated presentations, animated visuals, video-ready materials with sourced references embedded. Not a rough draft. Production-grade output.
+
+She didn't learn to code. She didn't buy new software. She just stopped using AI as a search engine and started using it as a production line.
+
+Here's exactly how we did it — detailed enough for you to replicate today.
+
+## The Trap: AI as a Smarter Google
+
+Most people's AI workflow looks like this: open ChatGPT, ask a question, copy the answer, manually build everything else.
+
+That's level one. It's useful. It's also a ceiling.
+
+The problem isn't the AI — it's the architecture. You're using a jet engine to power a bicycle. One prompt, one output, one manual step at a time.
+
+The leap happens when you stop asking AI to help you — and start asking AI to build the thing.
+
+## The Pipeline We Built in 60 Minutes
+
+### Step 1: Structure the Knowledge — Claude Projects (15 min)
+
+We took her raw course material — lecture notes, topic outlines, scattered Google Docs, reference PDFs — and uploaded everything into a **Claude Project** (claude.ai → Projects → New Project).
+
+Why a Project and not a regular chat? Because Projects give Claude persistent context. It reads all your files as background knowledge, so every conversation in that project is grounded in *your* material — not generic internet knowledge.
+
+**What we uploaded:** her existing course outline (rough, incomplete), lecture notes from previous sessions, a few reference articles she liked, and a document describing her target audience.
+
+**The prompt we used:**
+
+```
+You are a curriculum designer. I've uploaded all my course materials.
+
+Analyze everything and create a structured syllabus with:
+- 8 modules, each with a clear learning objective
+- 3-4 key topics per module
+- Suggested session flow (intro → core content → exercise → wrap-up)
+- Prerequisites for each module
+- One practical exercise per module that students can do during the session
+
+Format as a clean markdown document. Be specific — don't give generic advice.
+Use only the material I provided as source. If something is missing, flag it.
+```
+
+**Why this works:** We didn't ask Claude to "write a syllabus." We gave it all the raw material and asked it to *find the structure that was already there.* The output is dramatically better because it's grounded in real content, not hallucinated frameworks.
+
+**Pro tip:** After the first output, we iterated twice. First: "Module 3 feels too dense. Split it into two modules and redistribute the topics." Then: "Add estimated time per section. Total should be 90 minutes per module." Two follow-up prompts turned a good syllabus into an excellent one. Don't accept the first output.
+
+**Output:** A complete, structured syllabus in markdown — 8 modules, learning objectives, session flows, exercises. Saved as a Google Doc.
+
+---
+
+### Step 2: Generate Presentations — Gamma (15 min)
+
+With the syllabus locked, we moved to presentation generation using **[Gamma](https://gamma.app)** — an AI presentation tool that creates slides from text input.
+
+We copied Module 1 from the syllabus (the full text — objectives, topics, flow, exercise), pasted it into Gamma's "Paste in text" option, and — this is the critical step — wrote a **creative direction prompt:**
+
+```
+Design style:
+- Minimal and modern. White background with a single accent color (#2563EB)
+- One concept per slide. Never more than 3 bullet points.
+- Use icons (line-style, not filled) to represent each concept
+- Large typography for headings (clean sans-serif)
+- Subtle fade-in transitions between slides
+- Include a visual diagram or flowchart for any process-oriented content
+- End each module with a clean "Exercise" slide with clear instructions
+- No stock photos. Use abstract geometric shapes or gradients for visual interest.
+- Consistent layout: title left-aligned, content centered, plenty of whitespace
+
+Content rules:
+- Slide titles should be statements, not topics (e.g., "Memory Decays Without Structure" not "About Memory")
+- Speaker notes for each slide with 2-3 talking points
+- Total: 12-15 slides per module
+```
+
+**Why most people get bad results from AI presentations:** They type "make a presentation about X" and accept whatever comes out. The AI doesn't know your taste. You have to art-direct it. Think of the prompt as a creative brief — the more specific your visual language, the more professional the output.
+
+We repeated this for each module, adjusting the accent color per module to create visual distinction across the course.
+
+**Output:** 8 presentation decks, 12-15 slides each, with consistent design language, speaker notes, and exercise slides.
+
+---
+
+### Step 3: Source Video & References — ChatGPT with Agent Mode (15 min)
+
+Here's where it gets powerful. We needed each module to include 2-3 short video references, key articles that support the core concepts, and specific timestamps in videos that are most relevant.
+
+We used **ChatGPT's agent mode** (GPT-4 with browsing enabled):
+
+```
+I'm building a course with the following module structure:
+
+[Pasted the full syllabus from Step 1]
+
+For each module, find:
+1. 2-3 YouTube videos (under 15 minutes each) that directly support
+   the module's learning objectives. Include video title, URL,
+   why it's relevant, and the most relevant timestamp range.
+
+2. 1-2 articles or blog posts for pre-work or follow-up.
+   Include title, author, URL, and one-sentence relevance summary.
+
+Quality filters:
+- No videos older than 2023 unless canonical
+- Good production quality and clear audio
+- No listicles or clickbait articles
+- Academic papers OK if accessible
+```
+
+**Why agent mode matters:** Regular ChatGPT can't browse the web. Agent mode can search, visit pages, verify that links work, and check video lengths. It's the difference between getting hallucinated URLs and getting real, verified references.
+
+We reviewed the output manually — took about 5 minutes to scan, swap one or two that didn't feel right, and approve the rest. AI does the research; you do the editorial judgment.
+
+**Output:** A reference document with 2-3 videos and 1-2 articles per module, with timestamps and relevance notes.
+
+---
+
+### Step 4: Assemble Video-Ready Packages — Remotion (15 min)
+
+Final step. We used **[Remotion](https://remotion.dev)** — a React-based tool for creating videos programmatically — to combine the presentations with reference materials into video-ready packages.
+
+We used Claude to generate the Remotion component code: a template that takes slide images, displays each for 8 seconds with a subtle ken-burns effect, adds lower-third text bars, crossfades between slides, and inserts reference cards at specific points.
+
+**If you're not technical:** Skip Remotion entirely and achieve 80% of the result by exporting your Gamma slides as a PDF, using **Canva** or **CapCut** to assemble slides into a video with transitions, manually adding reference cards between sections, and recording a voiceover using your speaker notes as a script.
+
+The point isn't the specific tool — it's the pipeline. Structured content → visual production → enrichment → assembly.
+
+**Output:** Video-ready packages for each module — slides, transitions, reference cards, ready to record or publish.
+
+---
+
+## The Complete Pipeline
+
+| Step | Tool | Input | Output | Time |
+|------|------|-------|--------|------|
+| 1. Structure | Claude Projects | Raw course materials | Organized syllabus | 15 min |
+| 2. Design | Gamma | Syllabus + creative brief | Slide decks with speaker notes | 15 min |
+| 3. Research | ChatGPT Agent Mode | Syllabus | Curated references + timestamps | 15 min |
+| 4. Assemble | Remotion / Canva | Slides + references | Video-ready packages | 15 min |
+
+**Total: 60 minutes from raw notes to production-ready course content.**
+
+## The Three Mistakes That Keep People at Level One
+
+**Mistake 1: Using one tool for everything.** Each AI has a sweet spot. Claude is exceptional at understanding large documents. ChatGPT's agent mode is best for web research. Gamma is purpose-built for presentations. Don't force your hammer to be a screwdriver.
+
+**Mistake 2: Accepting the first output.** AI gives you a solid first draft — maybe 70% of the way there. The magic is in the iteration. Two or three follow-up prompts transform "good enough" into "this is actually better than what I'd make manually."
+
+**Mistake 3: Thinking in prompts instead of pipelines.** One prompt = one output. That's useful but linear. The breakthrough is thinking in stages: What needs structure? What needs visual production? What needs research? What needs assembly? Each stage feeds the next. That's not "using AI." That's building with AI.
+
+## What Actually Changed
+
+The person I helped isn't a developer. She's a teacher who creates courses. In one hour, she went from *"I use AI to brainstorm, then spend days building everything manually"* to *"I direct the AI pipeline and focus on what I actually care about — the content and the teaching."*
+
+That mental shift — from operator to director — is available to anyone. The tools are free or nearly free. The pipeline pattern works for any content type: courses, marketing materials, reports, training programs, client deliverables.
+
+The gap was never the technology. It was seeing the assembly line instead of the single tool.
+
+## Try It Yourself
+
+Pick a project you've been doing manually. Break it into stages — structure, production, research, assembly. Match each stage to a tool. Write real creative briefs, not "make me a thing" but specific direction with style, format, and constraints. Chain the outputs so each step feeds the next.
+
+Start small. One project. One pipeline. Once you see the output difference, you won't go back to single-prompt workflows.
+
+---
+
+*I'm Eliran — building systems that turn AI from an assistant into infrastructure. More at [elirank1.github.io/blog](https://elirank1.github.io/blog).*
