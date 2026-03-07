@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useAppStore } from './store/appStore';
 import Header from './components/Layout/Header';
 import JobInput from './components/JobInput/JobInput';
@@ -243,7 +244,12 @@ function ResultsPage() {
 }
 
 export default function App() {
-  const { currentView } = useAppStore();
+  const { currentView, syncFromCloud } = useAppStore();
+
+  // Sync from cloud on initial load
+  useEffect(() => {
+    syncFromCloud();
+  }, [syncFromCloud]);
 
   return (
     <div className="min-h-screen bg-slate-50">

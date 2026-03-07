@@ -19,7 +19,7 @@ const navItems: { view: AppView; label: string; icon: React.ReactNode }[] = [
 ];
 
 export default function Header() {
-  const { currentView, setView, settings } = useAppStore();
+  const { currentView, setView, settings, syncStatus } = useAppStore();
 
   // "results" view shouldn't show in nav but should highlight Analyze
   const activeView = currentView === 'results' ? 'results' : currentView;
@@ -66,6 +66,15 @@ export default function Header() {
 
           {/* Status */}
           <div className="flex items-center gap-2">
+            {syncStatus === 'syncing' && (
+              <span className="text-[10px] text-slate-400 animate-pulse">Syncing...</span>
+            )}
+            {syncStatus === 'synced' && (
+              <span className="text-[10px] text-emerald-500">Synced</span>
+            )}
+            {syncStatus === 'error' && (
+              <span className="text-[10px] text-red-400">Sync error</span>
+            )}
             {settings.apiKey ? (
               <span className="badge-green text-[10px]">Connected</span>
             ) : (

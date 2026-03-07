@@ -51,6 +51,12 @@ interface AppState {
   setAnalysisProgress: (msg: string) => void;
   error: string | null;
   setError: (msg: string | null) => void;
+
+  // Cloud sync
+  syncStatus: 'idle' | 'syncing' | 'synced' | 'error';
+  lastSyncAt: string | null;
+  syncFromCloud: () => Promise<void>;
+  syncToCloud: () => Promise<void>;
 }
 
 const loadFromStorage = <T>(key: string, fallback: T): T => {
@@ -69,6 +75,36 @@ const saveToStorage = (key: string, value: unknown) => {
     // localStorage full or unavailable
   }
 };
+
+/** Check if we're on Vercel (proxy mode available) */
+function isProxyMode(): boolean {
+  return window.location.hostname.includes('vercel.app') ||
+    window.location.hostname === 'localhost';
+}
+
+/** Sync data to cloud via /api/data */
+async function pushToCloud(accessCode: string, data: { analyses: CandidateAnalysis[]; savedJobs: JobDescription[]; log: AnalysisLog[] }) {
+  const response = await fetch(`${window.location.origin}/api/data`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Access-Code': accessCode,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Cloud sync failed');
+  return response.json();
+}
+
+/** Pull data from cloud via /api/data */
+async function pullFromCloud(accessCode: string) {
+  const response = await fetch(`${window.location.origin}/api/data`, {
+    method: 'GET',
+    headers: { 'X-Access-Code': accessCode },
+  });
+  if (!response.ok) throw new Error('Cloud fetch failed');
+  return response.json();
+}
 
 export const useAppStore = create<AppState>((set, get) => ({
   // Navigation
@@ -96,16 +132,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   savedJobs: loadFromStorage('savedJobs', []),
   saveJob: (job) => {
     const existing = get().savedJobs;
-    // Don't duplicate by id
     if (existing.some((j) => j.id === job.id)) return;
     const updated = [job, ...existing];
-    saveToStorage('savedJobs', updated.slice(0, 50)); // keep last 50
+    saveToStorage('savedJobs', updated.slice(0, 50));
     set({ savedJobs: updated });
+    get().syncToCloud();
   },
   removeJob: (id) => {
     const updated = get().savedJobs.filter((j) => j.id !== id);
     saveToStorage('savedJobs', updated);
     set({ savedJobs: updated });
+    get().syncToCloud();
   },
 
   // Candidates
@@ -120,8 +157,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   analyses: loadFromStorage('analyses', []),
   addAnalysis: (analysis) => {
     const updated = [analysis, ...get().analyses];
-    saveToStorage('analyses', updated.slice(0, 100)); // keep last 100
+    saveToStorage('analyses', updated.slice(0, 100));
     set({ analyses: updated });
+    get().syncToCloud();
   },
   currentAnalysis: null,
   setCurrentAnalysis: (analysis) => set({ currentAnalysis: analysis }),
@@ -131,11 +169,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     );
     saveToStorage('analyses', updated.slice(0, 100));
     set({ analyses: updated });
-    // Also update currentAnalysis if it's the same one
     const current = get().currentAnalysis;
     if (current && current.id === id) {
       set({ currentAnalysis: { ...current, recruiterComment: comment } });
     }
+    get().syncToCloud();
   },
 
   // History log
@@ -144,6 +182,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const updated = [entry, ...get().analysisLog];
     saveToStorage('log', updated.slice(0, 200));
     set({ analysisLog: updated });
+    // synced together with analyses
   },
   clearLog: () => {
     saveToStorage('log', []);
@@ -157,4 +196,75 @@ export const useAppStore = create<AppState>((set, get) => ({
   setAnalysisProgress: (msg) => set({ analysisProgress: msg }),
   error: null,
   setError: (msg) => set({ error: msg }),
+
+  // Cloud sync
+  syncStatus: 'idle',
+  lastSyncAt: null,
+
+  syncFromCloud: async () => {
+    if (!isProxyMode()) return;
+    const { settings } = get();
+    if (!settings.apiKey) return;
+
+    set({ syncStatus: 'syncing' });
+    try {
+      const data = await pullFromCloud(settings.apiKey);
+      // Merge cloud data with local (cloud wins for conflicts)
+      if (data.analyses?.length) {
+        const local = get().analyses;
+        const merged = mergeById(local, data.analyses, 100);
+        saveToStorage('analyses', merged);
+        set({ analyses: merged });
+      }
+      if (data.savedJobs?.length) {
+        const local = get().savedJobs;
+        const merged = mergeById(local, data.savedJobs, 50);
+        saveToStorage('savedJobs', merged);
+        set({ savedJobs: merged });
+      }
+      if (data.log?.length) {
+        const local = get().analysisLog;
+        const merged = mergeById(local, data.log, 200);
+        saveToStorage('log', merged);
+        set({ analysisLog: merged });
+      }
+      set({ syncStatus: 'synced', lastSyncAt: new Date().toISOString() });
+    } catch {
+      set({ syncStatus: 'error' });
+    }
+  },
+
+  syncToCloud: async () => {
+    if (!isProxyMode()) return;
+    const { settings, analyses, savedJobs, analysisLog } = get();
+    if (!settings.apiKey) return;
+
+    set({ syncStatus: 'syncing' });
+    try {
+      await pushToCloud(settings.apiKey, {
+        analyses,
+        savedJobs,
+        log: analysisLog,
+      });
+      set({ syncStatus: 'synced', lastSyncAt: new Date().toISOString() });
+    } catch {
+      set({ syncStatus: 'error' });
+    }
+  },
 }));
+
+/** Merge two arrays by id, newest first, capped at maxItems */
+function mergeById<T extends { id: string; timestamp?: string; createdAt?: string }>(
+  local: T[], remote: T[], maxItems: number
+): T[] {
+  const map = new Map<string, T>();
+  for (const item of local) {
+    if (item?.id) map.set(item.id, item);
+  }
+  for (const item of remote) {
+    if (item?.id) map.set(item.id, item);
+  }
+  return Array.from(map.values())
+    .sort((a, b) => (b.timestamp || b.createdAt || '').localeCompare(a.timestamp || a.createdAt || ''))
+    .slice(0, maxItems);
+}
