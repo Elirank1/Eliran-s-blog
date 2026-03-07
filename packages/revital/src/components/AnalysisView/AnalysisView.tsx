@@ -2,7 +2,6 @@ import { useAppStore } from '../../store/appStore';
 import { analysisToText } from '../../utils/export';
 import { copyToClipboard, downloadFile } from '../../utils/export';
 import {
-  User,
   Target,
   CheckCircle,
   AlertTriangle,
@@ -15,9 +14,9 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
+  Edit3,
 } from 'lucide-react';
-import type { CandidateAnalysis } from '../../types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 /* ─── Score Ring ─── */
 function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
@@ -78,7 +77,7 @@ function VerdictBadge({ verdict }: { verdict: string }) {
   );
 }
 
-/* ─── Pillar Mini Bar (horizontal, compact) ─── */
+/* ─── Pillar Mini Bar ─── */
 function PillarMiniBar({
   name,
   score,
@@ -173,6 +172,44 @@ function CollapsibleSection({
   );
 }
 
+/* ─── Recruiter Comment Field ─── */
+function RecruiterCommentField({ analysisId, initialComment }: { analysisId: string; initialComment: string }) {
+  const { updateAnalysisComment } = useAppStore();
+  const [comment, setComment] = useState(initialComment);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setComment(initialComment);
+  }, [initialComment, analysisId]);
+
+  const handleSave = () => {
+    updateAnalysisComment(analysisId, comment);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  };
+
+  return (
+    <div className="card p-4">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="flex items-center gap-2 font-semibold text-sm text-slate-900">
+          <Edit3 size={14} className="text-brand-600" />
+          Recruiter Notes
+        </h3>
+        {saved && (
+          <span className="text-[10px] text-emerald-600 font-medium">Saved!</span>
+        )}
+      </div>
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        onBlur={handleSave}
+        placeholder="Add your own notes about this candidate..."
+        className="w-full text-sm border border-slate-200 rounded-lg p-3 min-h-[80px] resize-y focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-300"
+      />
+    </div>
+  );
+}
+
 /* ─── Main Component ─── */
 export default function AnalysisView() {
   const { currentAnalysis, analyses, setCurrentAnalysis } = useAppStore();
@@ -229,8 +266,10 @@ export default function AnalysisView() {
               </h2>
               <VerdictBadge verdict={a.verdict} />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {a.jobTitle} &middot;{' '}
+            <p className="text-xs text-brand-600 font-medium mt-0.5">
+              {a.jobTitle}
+            </p>
+            <p className="text-[10px] text-slate-400 mt-0.5">
               {new Date(a.timestamp).toLocaleDateString()}
             </p>
             <p className="text-sm text-slate-700 mt-2 leading-relaxed">
@@ -287,16 +326,14 @@ export default function AnalysisView() {
         </div>
       </div>
 
-      {/* ═══ PILLAR SCORES (always visible, compact) ═══ */}
+      {/* ═══ PILLAR SCORES (always visible) ═══ */}
       <div className="card p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="flex items-center gap-2 font-semibold text-sm text-slate-900">
             <Target size={14} className="text-brand-600" />
             Pillar Scores
           </h3>
-          <span className="text-xs text-slate-400">
-            avg {avgScore}/10
-          </span>
+          <span className="text-xs text-slate-400">avg {avgScore}/10</span>
         </div>
         <div className="space-y-2">
           {a.pillarScores.map((p, i) => (
@@ -309,6 +346,12 @@ export default function AnalysisView() {
           ))}
         </div>
       </div>
+
+      {/* ═══ RECRUITER COMMENT (free text, always visible) ═══ */}
+      <RecruiterCommentField
+        analysisId={a.id}
+        initialComment={a.recruiterComment || ''}
+      />
 
       {/* ═══ COLLAPSIBLE SECTIONS ═══ */}
 
@@ -325,10 +368,7 @@ export default function AnalysisView() {
         <ul className="space-y-1.5">
           {a.greenFlags.map((f, i) => (
             <li key={i} className="flex items-start gap-2 text-sm">
-              <CheckCircle
-                size={13}
-                className="text-emerald-500 mt-0.5 shrink-0"
-              />
+              <CheckCircle size={13} className="text-emerald-500 mt-0.5 shrink-0" />
               <span className="text-slate-700">{f}</span>
             </li>
           ))}
@@ -352,18 +392,13 @@ export default function AnalysisView() {
         }
       >
         {a.redFlags.length === 0 && a.autoRedFlags.length === 0 ? (
-          <p className="text-sm text-slate-400 italic">
-            No red flags detected.
-          </p>
+          <p className="text-sm text-slate-400 italic">No red flags detected.</p>
         ) : (
           <>
             <ul className="space-y-1.5">
               {a.redFlags.map((f, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <AlertTriangle
-                    size={13}
-                    className="text-red-500 mt-0.5 shrink-0"
-                  />
+                  <AlertTriangle size={13} className="text-red-500 mt-0.5 shrink-0" />
                   <span className="text-slate-700">{f}</span>
                 </li>
               ))}
@@ -384,9 +419,7 @@ export default function AnalysisView() {
                   >
                     <AlertCircle size={12} className="mt-0.5 shrink-0" />
                     <span>
-                      <strong className="uppercase">
-                        {f.type.replace(/_/g, ' ')}
-                      </strong>{' '}
+                      <strong className="uppercase">{f.type.replace(/_/g, ' ')}</strong>{' '}
                       — {f.description}
                     </span>
                   </div>
@@ -397,7 +430,7 @@ export default function AnalysisView() {
         )}
       </CollapsibleSection>
 
-      {/* Pillar Details (evidence + gaps) */}
+      {/* Pillar Details */}
       <CollapsibleSection
         icon={<Target size={15} />}
         title="Pillar Details"
@@ -409,25 +442,14 @@ export default function AnalysisView() {
       >
         <div className="space-y-2.5">
           {a.pillarScores.map((p, i) => (
-            <div
-              key={i}
-              className="p-3 rounded-lg bg-slate-50 border border-slate-100"
-            >
+            <div key={i} className="p-3 rounded-lg bg-slate-50 border border-slate-100">
               <div className="flex items-center justify-between mb-1">
-                <span className="font-medium text-xs text-slate-900">
-                  {p.pillarName}
-                </span>
-                <span className="text-xs font-bold text-slate-600">
-                  {p.score}/10
-                </span>
+                <span className="font-medium text-xs text-slate-900">{p.pillarName}</span>
+                <span className="text-xs font-bold text-slate-600">{p.score}/10</span>
               </div>
-              <p className="text-xs text-slate-600">
-                {p.evidence}
-              </p>
+              <p className="text-xs text-slate-600">{p.evidence}</p>
               {p.gap && p.gap !== 'None' && (
-                <p className="text-xs text-amber-600 mt-1">
-                  Gap: {p.gap}
-                </p>
+                <p className="text-xs text-amber-600 mt-1">Gap: {p.gap}</p>
               )}
             </div>
           ))}
@@ -446,25 +468,20 @@ export default function AnalysisView() {
       >
         <div className="space-y-2">
           {a.truthTestQuestions.map((q, i) => (
-            <div
-              key={i}
-              className="p-3 rounded-lg bg-brand-50/50 border border-brand-100"
-            >
+            <div key={i} className="p-3 rounded-lg bg-brand-50/50 border border-brand-100">
               <p className="text-sm font-medium text-slate-900">
                 {i + 1}. {q.question}
               </p>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Verifies: {q.intent}
-              </p>
+              <p className="text-[11px] text-slate-500 mt-1">Verifies: {q.intent}</p>
             </div>
           ))}
         </div>
       </CollapsibleSection>
 
-      {/* Recruiter Notes */}
+      {/* AI Recruiter Notes */}
       <CollapsibleSection
         icon={<MessageSquare size={15} />}
-        title="Recruiter Notes"
+        title="AI Suggestions"
         badge={
           <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-medium">
             Outreach & Salary
@@ -474,22 +491,16 @@ export default function AnalysisView() {
         <div className="space-y-2 text-sm">
           <p>
             <strong className="text-slate-700 text-xs">Outreach:</strong>{' '}
-            <span className="text-slate-600 text-xs">
-              {a.recruiterNotes.outreachAngle}
-            </span>
+            <span className="text-slate-600 text-xs">{a.recruiterNotes.outreachAngle}</span>
           </p>
           <p>
             <strong className="text-slate-700 text-xs">Salary Est:</strong>{' '}
-            <span className="text-slate-600 text-xs">
-              {a.recruiterNotes.salaryEstimate}
-            </span>
+            <span className="text-slate-600 text-xs">{a.recruiterNotes.salaryEstimate}</span>
           </p>
           {a.recruiterNotes.additionalNotes && (
             <p>
               <strong className="text-slate-700 text-xs">Notes:</strong>{' '}
-              <span className="text-slate-600 text-xs">
-                {a.recruiterNotes.additionalNotes}
-              </span>
+              <span className="text-slate-600 text-xs">{a.recruiterNotes.additionalNotes}</span>
             </p>
           )}
         </div>

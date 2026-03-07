@@ -17,9 +17,14 @@ interface AppState {
   settings: AppSettings;
   updateSettings: (settings: Partial<AppSettings>) => void;
 
-  // Job Description
+  // Job Description (current working JD for analyze tab)
   currentJob: JobDescription | null;
   setCurrentJob: (job: JobDescription | null) => void;
+
+  // Saved Jobs (persisted)
+  savedJobs: JobDescription[];
+  saveJob: (job: JobDescription) => void;
+  removeJob: (id: string) => void;
 
   // Candidates
   candidates: Candidate[];
@@ -32,6 +37,7 @@ interface AppState {
   addAnalysis: (analysis: CandidateAnalysis) => void;
   currentAnalysis: CandidateAnalysis | null;
   setCurrentAnalysis: (analysis: CandidateAnalysis | null) => void;
+  updateAnalysisComment: (id: string, comment: string) => void;
 
   // History log
   analysisLog: AnalysisLog[];
@@ -82,9 +88,25 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ settings: updated });
   },
 
-  // Job
+  // Job (current working JD)
   currentJob: null,
   setCurrentJob: (job) => set({ currentJob: job }),
+
+  // Saved Jobs
+  savedJobs: loadFromStorage('savedJobs', []),
+  saveJob: (job) => {
+    const existing = get().savedJobs;
+    // Don't duplicate by id
+    if (existing.some((j) => j.id === job.id)) return;
+    const updated = [job, ...existing];
+    saveToStorage('savedJobs', updated.slice(0, 50)); // keep last 50
+    set({ savedJobs: updated });
+  },
+  removeJob: (id) => {
+    const updated = get().savedJobs.filter((j) => j.id !== id);
+    saveToStorage('savedJobs', updated);
+    set({ savedJobs: updated });
+  },
 
   // Candidates
   candidates: [],
@@ -103,6 +125,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   currentAnalysis: null,
   setCurrentAnalysis: (analysis) => set({ currentAnalysis: analysis }),
+  updateAnalysisComment: (id, comment) => {
+    const updated = get().analyses.map((a) =>
+      a.id === id ? { ...a, recruiterComment: comment } : a
+    );
+    saveToStorage('analyses', updated.slice(0, 100));
+    set({ analyses: updated });
+    // Also update currentAnalysis if it's the same one
+    const current = get().currentAnalysis;
+    if (current && current.id === id) {
+      set({ currentAnalysis: { ...current, recruiterComment: comment } });
+    }
+  },
 
   // History log
   analysisLog: loadFromStorage('log', []),
