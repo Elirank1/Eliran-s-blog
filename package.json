@@ -12,13 +12,17 @@
     "test": "npm run test --workspaces",
     "blog:dev": "npm run dev --workspace=packages/blog",
     "suno:dev": "npm run dev --workspace=packages/suno-music",
-    "toolkit:dev": "npm run dev --workspace=packages/claude-toolkit"
+    "toolkit:dev": "npm run dev --workspace=packages/claude-toolkit",
+    "revital:dev": "npm run dev --workspace=packages/revital",
+    "revital:build": "npm run build --workspace=packages/revital"
   },
   "keywords": [
     "blog",
     "ai-music",
     "claude",
     "automation",
+    "cv-analyzer",
+    "recruiting",
     "monorepo"
   ],
   "author": "Eliran <elirank512@gmail.com>",
